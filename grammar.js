@@ -1,157 +1,289 @@
 const PREC = {
-  call: 9,
-  unary: 8,
-  multiplicative: 7,
-  additive: 6,
-  comparison: 5,
-  assignment: 1,
+  assign: 1,
+  conditional: 2,
+  comma: 3,
+  additive: 4,
+  multiplicative: 5,
+  unary: 6,
+  call: 7,
+  primary: 8,
+  return_with_expr: 9,
+  branch: 10,
 };
 
 module.exports = grammar({
   name: "wq",
 
-  extras: ($) => [/[^\S\n]+/, $.comment],
+  extras: ($) => [/[ \t\r]+/, $.comment],
 
   word: ($) => $.identifier,
 
+  conflicts: ($) => [
+    [$.postfix_expression, $.index_expression, $.call_expression],
+  ],
+
   rules: {
-    source_file: ($) => repeat($._statement),
+    source_file: ($) =>
+      seq(
+        optional($._statement),
+        repeat(seq(choice(";", $.newline), $._statement)),
+        optional(choice(";", $.newline)),
+      ),
 
-    _statement: ($) => seq($._expression, optional(choice(";", "\n"))),
+    _statement: ($) =>
+      choice(
+        $.return_statement,
+        $.break_statement,
+        $.continue_statement,
+        $.assert_statement,
+        $.expression,
+      ),
 
-    _expression: ($) =>
+    expression: ($) =>
       choice(
         $.assignment,
-        $.binary_expression,
-        $.unary_expression,
-        $.call,
-        $.index,
-        $.list,
-        $.dict,
-        $.function_definition,
-        $.conditional,
-        $.conditional_dot,
+        $.conditional_expression,
+        $.conditional_expression_short,
         $.while_loop,
         $.for_loop,
-        $.identifier,
-        $.number,
-        $.string,
-        $.symbol,
-        $.boolean,
-      ),
-
-    number: (_) => /[0-9]+(\.[0-9]+)?/,
-
-    string: (_) => token(seq('"', repeat(choice(/[^"\\\n]+/, /\\./)), '"')),
-
-    symbol: (_) => token(seq("`", /[a-zA-Z_][a-zA-Z0-9_]*/)),
-
-    identifier: (_) => /[a-zA-Z_][a-zA-Z0-9_]*/,
-
-    boolean: (_) => choice("true", "false"),
-
-    comment: (_) => token(seq("//", /.*/)),
-
-    list: ($) => seq("(", sepBy($._expression, ";"), optional(";"), ")"),
-
-    dict: ($) =>
-      seq(
-        "(",
-        sepBy1(seq($.symbol, ":", $._expression), ";"),
-        optional(";"),
-        ")",
-      ),
-
-    call: ($) =>
-      prec(
-        PREC.call,
-        seq(
-          field("function", $._expression),
-          "[",
-          sepBy($._expression, ";"),
-          ";",
-          "]",
-        ),
-      ),
-
-    index: ($) =>
-      prec(
-        PREC.call,
-        seq(
-          field("object", $._expression),
-          "[",
-          sepBy1($._expression, ";"),
-          "]",
-        ),
-      ),
-
-    unary_expression: ($) =>
-      prec(PREC.unary, seq(choice("-", "#"), $._expression)),
-
-    binary_expression: ($) =>
-      choice(
-        prec.left(
-          PREC.multiplicative,
-          seq($._expression, choice("*", "/", "%"), $._expression),
-        ),
-        prec.left(
-          PREC.additive,
-          seq($._expression, choice("+", "-"), $._expression),
-        ),
-        prec.left(
-          PREC.comparison,
-          seq(
-            $._expression,
-            choice("=", "~", "<", ">", "<=", ">="),
-            $._expression,
-          ),
-        ),
+        $.function_definition,
+        $.additive_expression,
+        $.postfix_expression,
+        $.leading_comma_list,
+        $.primary_expression,
       ),
 
     assignment: ($) =>
       prec.right(
-        PREC.assignment,
+        PREC.assign,
         seq(
-          field("left", choice($.identifier, $.index)),
+          field("left", choice($.identifier, $.index_expression)),
           ":",
-          field("right", $._expression),
+          field("right", $.expression),
         ),
       ),
 
-    conditional: ($) =>
+    additive_expression: ($) =>
+      prec.left(
+        PREC.additive,
+        seq(
+          field("left", $.comparison_expression),
+          repeat1(
+            seq(
+              field("operator", choice("+", "-")),
+              field("right", $.comparison_expression),
+            ),
+          ),
+        ),
+      ),
+
+    comparison_expression: ($) =>
+      prec.left(
+        PREC.conditional,
+        seq(
+          field("left", $.multiplicative_expression),
+          repeat1(
+            seq(
+              field("operator", choice("==", "!=", "<", "<=", ">", ">=")),
+              field("right", $.multiplicative_expression),
+            ),
+          ),
+        ),
+      ),
+
+    multiplicative_expression: ($) =>
+      prec.left(
+        PREC.multiplicative,
+        seq(
+          field("left", $.unary_expression),
+          repeat1(
+            seq(
+              field("operator", choice("*", "/", "%")),
+              field("right", $.unary_expression),
+            ),
+          ),
+        ),
+      ),
+
+    unary_expression: ($) =>
+      prec.right(
+        PREC.unary,
+        choice(
+          seq("-", $.unary_expression),
+          seq("#", $.unary_expression),
+          $.postfix_expression,
+          $.parenthesized_expression,
+          $.empty_list,
+          $.multi_list,
+          $.dict,
+          $.identifier,
+          $.literal,
+        ),
+      ),
+
+    postfix_expression: ($) =>
+      prec.left(
+        PREC.call,
+        seq(
+          field("object", $.primary_expression),
+          repeat1(
+            choice(
+              $.call_suffix,
+              $.index_suffix,
+              prec(1, field("implicit_call", $.unary_expression)),
+            ),
+          ),
+        ),
+      ),
+
+    call_suffix: ($) => seq("[", optional(sepBy1(";", $.expression)), ";", "]"),
+
+    index_suffix: ($) => seq("[", sepBy1(";", $.expression), "]"),
+
+    call_expression: ($) =>
+      prec.left(
+        PREC.call,
+        seq(
+          field(
+            "function",
+            choice($.identifier, $.postfix_expression, $.primary_expression),
+          ),
+          $.call_suffix,
+        ),
+      ),
+
+    index_expression: ($) =>
+      prec.left(
+        PREC.call,
+        seq(
+          field(
+            "object",
+            choice($.identifier, $.postfix_expression, $.primary_expression),
+          ),
+          $.index_suffix,
+        ),
+      ),
+
+    conditional_expression: ($) =>
       seq(
         "$",
         "[",
-        $._expression,
+        field("condition", $.expression),
         ";",
-        $._expression,
-        optional(seq(";", $._expression)),
+        field("true_branch", $.branch_sequence),
+        ";",
+        field("false_branch", $.branch_sequence),
         "]",
       ),
 
-    conditional_dot: ($) =>
-      seq("$.", "[", $._expression, ";", sepBy1($._expression, ";"), "]"),
+    conditional_expression_short: ($) =>
+      seq(
+        "$.",
+        "[",
+        field("condition", $.expression),
+        ";",
+        field("true_branch", $.branch_sequence),
+        "]",
+      ),
 
-    while_loop: ($) => seq("W", "[", $._expression, ";", $._expression, "]"),
+    while_loop: ($) =>
+      seq(
+        "W",
+        "[",
+        field("condition", $.expression),
+        ";",
+        field("body", $.branch_sequence),
+        "]",
+      ),
 
-    for_loop: ($) => seq("N", "[", $._expression, ";", $._expression, "]"),
+    for_loop: ($) =>
+      seq(
+        "N",
+        "[",
+        field("count", $.expression),
+        ";",
+        field("body", $.branch_sequence),
+        "]",
+      ),
+
+    branch_sequence: ($) =>
+      prec.right(
+        PREC.branch,
+        seq($.expression, repeat(seq(choice(";", $.newline), $.expression))),
+      ),
+
+    statement_list: ($) =>
+      seq($._statement, repeat(seq(choice(";", $.newline), $._statement))),
 
     function_definition: ($) =>
-      seq(
-        "{",
-        optional(
-          seq("[", optional(sepBy1($.identifier, ";")), optional(";"), "]"),
-        ),
-        repeat($._expression),
-        "}",
+      seq("{", optional($.parameter_list), repeat1($._statement), "}"),
+
+    parameter_list: ($) => seq("[", optional(sepBy1(";", $.identifier)), "]"),
+
+    primary_expression: ($) =>
+      choice(
+        $.identifier,
+        $.literal,
+        $.parenthesized_expression,
+        $.empty_list,
+        $.multi_list,
+        $.dict,
       ),
+
+    parenthesized_expression: ($) => seq("(", $.expression, ")"),
+
+    empty_list: ($) => seq("(", ")"),
+
+    multi_list: ($) =>
+      seq(
+        "(",
+        $.expression,
+        repeat1(seq(choice(";", $.newline), $.expression)),
+        optional(choice(";", $.newline)),
+        ")",
+      ),
+
+    dict: ($) => seq("(", sepBy1(choice(";", $.newline), $.pair), ")"),
+
+    pair: ($) => seq(field("key", $.symbol), ":", field("value", $.expression)),
+
+    leading_comma_list: ($) =>
+      prec.right(
+        PREC.primary,
+        seq(",", $.expression, repeat(seq(",", $.expression))),
+      ),
+
+    literal: ($) =>
+      choice($.integer, $.float, $.char, $.string, $.boolean, $.symbol),
+
+    boolean: ($) => choice("true", "false"),
+
+    break_statement: ($) => "@b",
+    continue_statement: ($) => "@c",
+    assert_statement: ($) => seq("@a", $.expression),
+
+    return_statement: ($) =>
+      choice(prec(PREC.return_with_expr, seq("@r", $.expression)), "@r"),
+
+    identifier: ($) => /[A-Za-z_][A-Za-z0-9_?]*/,
+
+    symbol: ($) => /`[A-Za-z_][A-Za-z0-9_?]*/,
+
+    integer: ($) => token(/[0-9]+/),
+    float: ($) => token(/[0-9]+\.[0-9]+/),
+
+    char: ($) => token(seq("'", /([^'\\]|\\.)/, "'")),
+    string: ($) => token(seq('"', /([^"\\]|\\.)*/, '"')),
+
+    comment: ($) => token(seq("//", /[^\n]*/)),
+
+    newline: ($) => /\r?\n/,
   },
 });
 
-function sepBy1(rule, delim) {
-  return seq(rule, repeat(seq(delim, rule)));
+function sepBy1(sep, rule) {
+  return seq(rule, repeat(seq(sep, rule)));
 }
-
-function sepBy(rule, delim) {
-  return optional(sepBy1(rule, delim));
+function sepBy(sep, rule) {
+  return optional(sepBy1(sep, rule));
 }

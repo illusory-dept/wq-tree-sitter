@@ -1,6 +1,6 @@
 {
   "name": "wq-tree-sitter",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "tree-sitter for wq",
   "main": "grammar.js",
   "scripts": {
@@ -19,7 +19,7 @@
   "bugs": {
     "url": "https://github.com/illusory-dept/wq-tree-sitter/issues"
   },
-  "homepage": "https://github.com/illusory-dept/wq-tree-sitter#readme",
+  "homepage": "https://github.com/illusory-dept/wq-tree-sitter",
   "devDependencies": {
     "tree-sitter-cli": "^0.25.8"
   }
