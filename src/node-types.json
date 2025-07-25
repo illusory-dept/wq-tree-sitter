@@ -15,7 +15,7 @@
       },
       "operator": {
         "multiple": true,
-        "required": true,
+        "required": false,
         "types": [
           {
             "type": "+",
@@ -29,7 +29,7 @@
       },
       "right": {
         "multiple": true,
-        "required": true,
+        "required": false,
         "types": [
           {
             "type": "comparison_expression",
@@ -98,11 +98,27 @@
       "required": true,
       "types": [
         {
+          "type": "assert_statement",
+          "named": true
+        },
+        {
+          "type": "break_statement",
+          "named": true
+        },
+        {
+          "type": "continue_statement",
+          "named": true
+        },
+        {
           "type": "expression",
           "named": true
         },
         {
           "type": "newline",
+          "named": true
+        },
+        {
+          "type": "return_statement",
           "named": true
         }
       ]
@@ -139,7 +155,7 @@
       },
       "operator": {
         "multiple": true,
-        "required": true,
+        "required": false,
         "types": [
           {
             "type": "!=",
@@ -169,7 +185,7 @@
       },
       "right": {
         "multiple": true,
-        "required": true,
+        "required": false,
         "types": [
           {
             "type": "multiplicative_expression",
@@ -491,7 +507,7 @@
       },
       "operator": {
         "multiple": true,
-        "required": true,
+        "required": false,
         "types": [
           {
             "type": "%",
@@ -509,7 +525,7 @@
       },
       "right": {
         "multiple": true,
-        "required": true,
+        "required": false,
         "types": [
           {
             "type": "unary_expression",
@@ -579,16 +595,6 @@
     "type": "postfix_expression",
     "named": true,
     "fields": {
-      "implicit_call": {
-        "multiple": true,
-        "required": false,
-        "types": [
-          {
-            "type": "unary_expression",
-            "named": true
-          }
-        ]
-      },
       "object": {
         "multiple": false,
         "required": true,

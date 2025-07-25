@@ -68,7 +68,7 @@ module.exports = grammar({
         PREC.additive,
         seq(
           field("left", $.comparison_expression),
-          repeat1(
+          repeat(
             seq(
               field("operator", choice("+", "-")),
               field("right", $.comparison_expression),
@@ -82,7 +82,7 @@ module.exports = grammar({
         PREC.conditional,
         seq(
           field("left", $.multiplicative_expression),
-          repeat1(
+          repeat(
             seq(
               field("operator", choice("==", "!=", "<", "<=", ">", ">=")),
               field("right", $.multiplicative_expression),
@@ -96,7 +96,7 @@ module.exports = grammar({
         PREC.multiplicative,
         seq(
           field("left", $.unary_expression),
-          repeat1(
+          repeat(
             seq(
               field("operator", choice("*", "/", "%")),
               field("right", $.unary_expression),
@@ -126,13 +126,7 @@ module.exports = grammar({
         PREC.call,
         seq(
           field("object", $.primary_expression),
-          repeat1(
-            choice(
-              $.call_suffix,
-              $.index_suffix,
-              prec(1, field("implicit_call", $.unary_expression)),
-            ),
-          ),
+          repeat(choice($.call_suffix, $.index_suffix)),
         ),
       ),
 
@@ -209,7 +203,7 @@ module.exports = grammar({
     branch_sequence: ($) =>
       prec.right(
         PREC.branch,
-        seq($.expression, repeat(seq(choice(";", $.newline), $.expression))),
+        seq($._statement, repeat(seq(choice(";", $.newline), $.expression))),
       ),
 
     statement_list: ($) =>
@@ -243,7 +237,14 @@ module.exports = grammar({
         ")",
       ),
 
-    dict: ($) => seq("(", sepBy1(choice(";", $.newline), $.pair), ")"),
+    dict: ($) =>
+      seq(
+        "(",
+        optional(choice(";", $.newline)),
+        sepBy1(choice(";", $.newline), $.pair),
+        optional(choice(";", $.newline)),
+        ")",
+      ),
 
     pair: ($) => seq(field("key", $.symbol), ":", field("value", $.expression)),
 
