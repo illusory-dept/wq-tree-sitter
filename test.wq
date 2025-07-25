@@ -1,0 +1,95 @@
+truth: true
+pi: 3.1415
+s: "hello\nworld"
+sym: `answer
+id?ok: 42
+x: 1 + 2 * 3
+y: -(4 - 5)
+z: # (1;2;3)
+cmp1: x == 7
+cmp2: x >  y
+cmp3: x <= y
+paren_is_expr: (1 + 1)
+empty_list: ()
+multi_list: (1; 2; 3)
+multi_list_with_trailing_sep: (1; 2; 3;)
+lc_list: ,1,2,3
+conf: (
+  `host: "localhost";
+  `port: 8080;
+  `debug?: true
+)
+arr: (10; 20; 30)
+second: arr[1]
+arr[2]: 99
+sel: arr[0;2]
+sel2: arr[(0;2)] // invalid
+add: { [a; b]
+  a + b
+}
+sum: add[1; 2;]
+anon_result: { [x]
+  x * x
+}[9;]
+sum_to_n: { [n]
+  acc: 0;
+  i: 0;
+  W[i < n;
+    acc: acc + i;
+    i: i + 1
+  ];
+  @r acc
+}
+sum_10: sum_to_n[10;]
+quadruple: { [x] x * 4 }
+qres: quadruple 7
+c1: $[true;
+  1;
+  2;
+  3
+]
+c2: $.[x > 0;
+  x
+]
+nested: $[x > 10;
+  id?ok: id?ok + 1;
+  id?ok * 2;
+  id?ok;
+  -1
+]
+i: 0
+acc2: 0
+W[i < 20;
+  @a i >= 0;
+  i: i + 1;
+  $. [i == 13; @c];
+  $. [i == 17; @b];
+  acc2: acc2 + i
+]
+acc3: 0
+N[5;
+  acc3: acc3 + 2
+]
+double: { [x] x * 2 }
+triple: { [x] x * 3 }
+six_times: double triple 1
+mat: ((1;2); (3;4))
+mget: { [m; r; c] m[r][c] }
+val_1_1: mget[mat; 1; 1;]
+idx: 1
+arr2: (0;1;2;3)
+arr2[idx + 1]: 42
+foo: {[x]
+$. [x < 0;@r -1];
+@r x
+}
+bar: {[n]
+i: 0;
+  total: 0;
+  W[i < n;i: i + 1;
+    $. [i % 2 == 0; @c];
+    total: total + i;
+    $. [total > 50; @b]
+  ];
+  @r total
+}

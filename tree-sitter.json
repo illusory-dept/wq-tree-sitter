@@ -6,9 +6,8 @@
       "camelcase": "Wq",
       "title": "wq",
       "scope": "source.wq",
-      "file-types": [
-        "wq"
-      ],
+      "file-types": ["wq"],
+      "highlights": ["queries/highlights.scm"],
       "injection-regex": "^wq$",
       "class-name": "TreeSitterWq"
     }

@@ -216,7 +216,7 @@ module.exports = grammar({
       seq($._statement, repeat(seq(choice(";", $.newline), $._statement))),
 
     function_definition: ($) =>
-      seq("{", optional($.parameter_list), repeat1($._statement), "}"),
+      seq("{", optional($.parameter_list), repeat1($.statement_list), "}"),
 
     parameter_list: ($) => seq("[", optional(sepBy1(";", $.identifier)), "]"),
 
@@ -253,8 +253,7 @@ module.exports = grammar({
         seq(",", $.expression, repeat(seq(",", $.expression))),
       ),
 
-    literal: ($) =>
-      choice($.integer, $.float, $.char, $.string, $.boolean, $.symbol),
+    literal: ($) => choice($.integer, $.float, $.string, $.boolean, $.symbol),
 
     boolean: ($) => choice("true", "false"),
 
@@ -272,7 +271,6 @@ module.exports = grammar({
     integer: ($) => token(/[0-9]+/),
     float: ($) => token(/[0-9]+\.[0-9]+/),
 
-    char: ($) => token(seq("'", /([^'\\]|\\.)/, "'")),
     string: ($) => token(seq('"', /([^"\\]|\\.)*/, '"')),
 
     comment: ($) => token(seq("//", /[^\n]*/)),

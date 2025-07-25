@@ -351,27 +351,11 @@
       "required": true,
       "types": [
         {
-          "type": "assert_statement",
-          "named": true
-        },
-        {
-          "type": "break_statement",
-          "named": true
-        },
-        {
-          "type": "continue_statement",
-          "named": true
-        },
-        {
-          "type": "expression",
-          "named": true
-        },
-        {
           "type": "parameter_list",
           "named": true
         },
         {
-          "type": "return_statement",
+          "type": "statement_list",
           "named": true
         }
       ]
@@ -451,10 +435,6 @@
       "types": [
         {
           "type": "boolean",
-          "named": true
-        },
-        {
-          "type": "char",
           "named": true
         },
         {
@@ -722,6 +702,41 @@
     }
   },
   {
+    "type": "statement_list",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "assert_statement",
+          "named": true
+        },
+        {
+          "type": "break_statement",
+          "named": true
+        },
+        {
+          "type": "continue_statement",
+          "named": true
+        },
+        {
+          "type": "expression",
+          "named": true
+        },
+        {
+          "type": "newline",
+          "named": true
+        },
+        {
+          "type": "return_statement",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "unary_expression",
     "named": true,
     "fields": {},
@@ -892,10 +907,6 @@
   },
   {
     "type": "break_statement",
-    "named": true
-  },
-  {
-    "type": "char",
     "named": true
   },
   {

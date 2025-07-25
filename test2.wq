@@ -1,0 +1,8 @@
+bar: {[n]
+  total: 0;
+  W[i < n;i: i + 1;
+    $. [i % 2 == 0; @c];
+    $. [total > 50; @b]
+  ];
+  @r total
+}
